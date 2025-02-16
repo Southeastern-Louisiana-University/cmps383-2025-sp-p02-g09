@@ -26,13 +26,13 @@ namespace Selu383.SP25.P02.Api.Controllers
             var user = await userManager.FindByNameAsync(dto.UserName);
             if (user == null)
             {
-                return BadRequest();
+                return Unauthorized();
             }
 
             var result = await signInManager.PasswordSignInAsync(user, dto.Password, false, false);
             if (!result.Succeeded)
             {
-                return BadRequest();
+                return Unauthorized();
             }
 
             var roles = await userManager.GetRolesAsync(user);
