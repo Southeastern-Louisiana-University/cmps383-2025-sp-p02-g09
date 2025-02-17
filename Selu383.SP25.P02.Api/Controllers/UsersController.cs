@@ -47,6 +47,12 @@ namespace Selu383.SP25.P02.Api.Controllers
                 return BadRequest();
             }
 
+            bool existingUser = dataContext.Users.Any(u => u.UserName == dto.UserName); //checks if any user has same name
+            if (existingUser)
+            {
+                return BadRequest("Username already exists.");
+            }
+
             var user = new User
             {
                 UserName = dto.UserName,
