@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Selu383.SP25.P02.Api.Data;
@@ -12,42 +13,24 @@ namespace Selu383.SP25.P02.Api.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly DbSet<User> users;
-        private readonly DataContext dataContext;
+        private readonly UserManager<User> _userManager;
+        private readonly DataContext _dataContext;
 
-        public UsersController(DataContext dataContext)
+        public UsersController(UserManager<User> userManager, DataContext dataContext)
         {
-            this.dataContext = dataContext;
-            this.users = dataContext.Set<User>();
+            _userManager = userManager;
+            _dataContext = dataContext;
         }
 
-        [HttpGet]
-        public IQueryable<UserDto> GetAllUsers()
-        {
-            return GetUserDtos(users);
-        }
-
-        [HttpGet]
-        [Route("{id}")]
-        public ActionResult<UserDto> GetUserById(int id)
-        {
-            var result = GetUserDtos(users.Where(x => x.Id == id)).FirstOrDefault();
-            if (result == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(result);
-        }
         [HttpPost]
-        public ActionResult<UserDto> CreateUser([FromBody] UserDto dto)
+        public async Task<ActionResult<UserDto>> CreateUser([FromBody] CreateUserDto dto)
         {
-            if (IsInvalid(dto))
+            if (dto == null || string.IsNullOrWhiteSpace(dto.UserName) || string.IsNullOrWhiteSpace(dto.Password))
             {
-                return BadRequest();
+                return BadRequest("Username and password are required.");
             }
 
-            bool existingUser = dataContext.Users.Any(u => u.UserName == dto.UserName); //checks if any user has same name
+            bool existingUser = _dataContext.Users.Any(u => u.UserName == dto.UserName); //checks if any user has same name
             if (existingUser)
             {
                 return BadRequest("Username already exists.");
@@ -58,68 +41,23 @@ namespace Selu383.SP25.P02.Api.Controllers
                 UserName = dto.UserName,
 
             };
-
-            users.Add(user);
-            dataContext.SaveChanges();
-
-            dto.Id = user.Id;
-
-            return CreatedAtAction(nameof(GetUserById), new { id = dto.Id }, dto);
-        }
-
-
-        [HttpPut]
-        [Route("{id}")]
-        public ActionResult<UserDto> UpdateUser(int id, [FromBody] UserDto dto)
-        {
-            if (IsInvalid(dto))
+            var result = await _userManager.CreateAsync(user, dto.Password);//checks to see if password meets requirements
+            if (result.Succeeded)
             {
-                return BadRequest();
+                return BadRequest("Password does not meet requirements.");
             }
 
-            var user = users.FirstOrDefault(x => x.Id == id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            user.UserName = dto.UserName;
-
-            dataContext.SaveChanges();
-
-            return Ok(dto);
-        }
-
-        [HttpDelete]
-        [Route("{id}")]
-        public ActionResult DeleteUser(int id)
-        {
-            var user = users.FirstOrDefault(x => x.Id == id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            users.Remove(user);
-            dataContext.SaveChanges();
-
-            return Ok();
-        }
-
-        private static bool IsInvalid(UserDto dto)
-        {
-            return string.IsNullOrWhiteSpace(dto.UserName);
-        }
-
-        private static IQueryable<UserDto> GetUserDtos(IQueryable<User> users)
-        {
-            return users
-                .Select(x => new UserDto
+                var userDto = new UserDto
                 {
-                    Id = x.Id,
-                    UserName = x.UserName,
-                    Roles = x.Roles.Select(r => r.Role.Name).ToArray()
-                });
+                    Id = user.Id,
+                    UserName = user.UserName,
+                    Roles = user.Roles.Select(r => r.Role.Name).ToArray()
+                };
+
+            return CreatedAtAction(nameof(CreateUser), new { id = user.Id }, userDto);
+            }
         }
     }
-}
+
+
+
