@@ -35,6 +35,17 @@ namespace Selu383.SP25.P02.Api.Controllers
             {
                 return BadRequest("Username already exists.");
             }
+            
+            if (dto.Roles == null || dto.Roles.Length == 0)//checks if roles is empty or none
+            {
+                return BadRequest("Roles required");
+            }
+
+            if (dto.Roles.Any(role => !_dataContext.Roles.Any(r => r.Name == role)))//checks if role exist in dto
+            {
+                return BadRequest("Role does not exist");
+            }
+
 
             var user = new User
             {
@@ -42,9 +53,14 @@ namespace Selu383.SP25.P02.Api.Controllers
 
             };
             var result = await _userManager.CreateAsync(user, dto.Password);//checks to see if password meets requirements
-            if (result.Succeeded)
+            if (!result.Succeeded)
             {
                 return BadRequest("Password does not meet requirements.");
+            }
+
+            foreach (var role in dto.Roles) 
+            {
+                await _userManager.AddToRoleAsync(user, role); //assigns role
             }
 
                 var userDto = new UserDto
@@ -54,7 +70,7 @@ namespace Selu383.SP25.P02.Api.Controllers
                     Roles = user.Roles.Select(r => r.Role.Name).ToArray()
                 };
 
-            return CreatedAtAction(nameof(CreateUser), new { id = user.Id }, userDto);
+            return Ok(userDto);
             }
         }
     }
