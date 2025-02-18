@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Selu383.SP25.P02.Api.Features.Authentication;
 using Selu383.SP25.P02.Api.Features.Users;
+using System.Threading.Tasks.Dataflow;
 
 namespace Selu383.SP25.P02.Api.Controllers
 {
@@ -26,13 +27,13 @@ namespace Selu383.SP25.P02.Api.Controllers
             var user = await userManager.FindByNameAsync(dto.UserName);
             if (user == null)
             {
-                return Unauthorized();
+                return BadRequest();
             }
 
             var result = await signInManager.PasswordSignInAsync(user, dto.Password, false, false);
             if (!result.Succeeded)
             {
-                return Unauthorized();
+                return BadRequest();
             }
 
             var roles = await userManager.GetRolesAsync(user);
