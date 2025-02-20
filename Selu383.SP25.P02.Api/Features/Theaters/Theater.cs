@@ -13,9 +13,9 @@ namespace Selu383.SP25.P02.Api.Features.Theaters
         public required string Address { get; set; }
         public int SeatCount { get; set; }
 
-        public int? ManagerId { get; set; }
+        public int ManagerId { get; set; }
         
         [ForeignKey("ManagerId")]
-        public User? Manager { get; set; }
+        public User Manager { get; set; }
     }
 }
