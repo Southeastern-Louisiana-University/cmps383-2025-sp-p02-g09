@@ -17,4 +17,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Selu383.SP25.Web\Selu383.SP25.P02.Web.esproj" />
+  </ItemGroup>
+
 </Project>
