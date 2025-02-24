@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Selu383.SP25.P02.Api.Data;
 using Selu383.SP25.P02.Api.Features.Users;
+using Microsoft.AspNetCore.SpaServices;
 
 namespace Selu383.SP25.P02.Api
 {
@@ -77,9 +78,28 @@ namespace Selu383.SP25.P02.Api
 
             app.UseHttpsRedirection();
             app.UseAuthentication();
-            app.UseAuthorization();
 
-            app.MapControllers();
+            app.UseRouting();
+            app.UseAuthorization();
+            app.UseEndpoints(x =>
+            {
+                x.MapControllers();
+            });
+
+            app.UseStaticFiles();
+
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSpa(x =>
+                {
+                    x.UseProxyToSpaDevelopmentServer("http://localhost:5173");
+                });
+            }
+            else
+            {
+                app.MapFallbackToFile("/index.html");
+            }
+
             app.Run();
         }
     }
